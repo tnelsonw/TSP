@@ -622,13 +622,49 @@ namespace TSP
         /// <returns>results array for GUI that contains three ints: cost of solution, time spent to find solution, number of solutions found during search (not counting initial BSSF estimate)</returns>
         public string[] greedySolveProblem()
         {
+            Stopwatch timer = new Stopwatch();
             string[] results = new string[3];
+            City[] c = GetCities();
+            double cost = 0;
+            double mincost = double.PositiveInfinity;
+            List<City> minRoute = null;
+            for (int i = 0; i < c.Length; i++)
+            {
+                double min = double.PositiveInfinity;
+                int minind = i;
+                cost = 0;
+                int previous = i;
+                List<City> currentRoute = new List<City>();
+                currentRoute.Add(c[i]);
+                while (currentRoute.Count < c.Length)
+                {
+                    min = double.PositiveInfinity;
+                    for (int j = 0; j < c.Length; j++)
+                    {
+                        if (min > c[previous].costToGetTo(c[j]) && !currentRoute.Contains(c[j]))
+                        {
+                            minind = j;
+                            min = c[previous].costToGetTo(c[j]);
+                        }
+                    }
+                    currentRoute.Add(c[minind]);
+                    cost += min;
+                    previous = minind;
+                }
+                cost += currentRoute[c.Length - 1].costToGetTo(currentRoute[0]);
+                if (cost < mincost)
+                {
+                    mincost = cost;
+                    minRoute = currentRoute;
+                }
 
+            }
+            bssf = new TSPSolution(new ArrayList(minRoute));
             // TODO: Add your implementation for a greedy solver here.
 
-            results[COST] = "not implemented";    // load results into array here, replacing these dummy values
-            results[TIME] = "-1";
-            results[COUNT] = "-1";
+            results[COST] = costOfBssf().ToString();  // load results into array here, replacing these dummy values
+            results[TIME] = timer.Elapsed.ToString();
+            results[COUNT] = "0";
 
             return results;
         }
