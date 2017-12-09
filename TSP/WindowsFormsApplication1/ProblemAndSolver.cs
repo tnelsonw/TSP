@@ -669,6 +669,21 @@ namespace TSP
             return results;
         }
 
+	private bool isAcceptable(double bestCostSoFar, double currentCost, int temperature)
+	{
+		double difference = currentCost - bestCostSoFar;
+		double ratio = currentCost / bestCostSoFar;
+		if (ratio > 1.5)
+		    return false;
+		if (ratio < 1.0)
+		    return true;
+		double tempRatio = difference / temperature;
+		double probability = 1 / (1 + (Math.Exp(tempRatio)));
+		if (probability > 0 && probability <= 0.8)
+		    return true;
+		return false;
+	}
+
         public string[] fancySolveProblem()
         {
 		string[] results = new string[3];
