@@ -671,15 +671,62 @@ namespace TSP
 
         public string[] fancySolveProblem()
         {
-            string[] results = new string[3];
+		string[] results = new string[3];
 
-            // implement simulated annealing
+		            // implement simulated annealing
+		string[] origResults = defaultSolveProblem();
+		double origCost = Convert.ToDouble(origResults[COST]);
+						                //City start = (City)Route[0];
+								            double bestCostSoFar = origCost;
+									                double tempBestCost = origCost;
+											            int temperature = 10000;
 
-            results[COST] = "not implemented";    // load results into array here, replacing these dummy values
-            results[TIME] = "-1";
-            results[COUNT] = "-1";
+												                while(temperature != 0)
+														            {
+															                    Random rand = new Random();
+																	                    int random = rand.Next(0, Cities.Length);
+																			                    int random2 = rand.Next(0, Cities.Length);
+																					                    City one = (City)Route[random];
+																							                    City two = (City)Route[random2];
+																									                    ArrayList copyRoute = new ArrayList();
+																											                    for (int i = 0; i < Route.Count; i++)
+																													                    {
+																															                        if (i == random)
+																																		                        copyRoute.Add(two);
+																																					                    else if (i == random2)
+																																							                            copyRoute.Add(one);
+																																										                        else
+																																													                        copyRoute.Add(Route[i]);
+																																																                }
+																																																		                TSPSolution temp = new TSPSolution(copyRoute);
+																																																				                double var = temp.costOfRoute();
+																																																						                if(temp.costOfRoute() != Double.PositiveInfinity)
+																																																								                {
+																																																										                    if (isAcceptable(tempBestCost, temp.costOfRoute(), temperature))
+																																																												                        {
+																																																															                        Route = copyRoute;
+																																																																		                        tempBestCost = temp.costOfRoute();
+																																																																					                        if (tempBestCost < bestCostSoFar)
+																																																																								                        {
+																																																																											                            bestCostSoFar = tempBestCost;
+																																																																														                                bssf = temp;
+																																																																																		                        }
+																																																																																					                        //if (temperature == 1)
+																																																																																								                        //    bssf = temp;
+																																																																																											                    }
+																																																																																													                        
+																																																																																																                }
+																																																																																																		                               
+																																																																																																					                       temperature -= 5;
+																																																																																																							                   }
 
-            return results;
+
+
+
+		results[COST] = bssf.costOfRoute().ToString();    // load results into array here, replacing these dummy values
+		results[TIME] = "-1";
+		results[Count] = "-1";
+		return results;
         }
         #endregion
     }
