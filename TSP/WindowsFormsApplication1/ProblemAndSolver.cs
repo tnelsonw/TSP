@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 using System.Diagnostics;
-
+using System.Linq;
 
 namespace TSP
 {
@@ -673,67 +673,106 @@ namespace TSP
         private bool isAcceptable(double bestCostSoFar, double currentCost, long temperature)
         {
             double difference = bestCostSoFar - currentCost;
-            double ratio = currentCost / bestCostSoFar;
-            if (ratio < 1.0)
+            if (currentCost < bestCostSoFar)
                 return true;
             double tempRatio = difference / temperature;
             double probability = 1 / (1 + (Math.Exp(tempRatio)));
             Random random = new Random();
             int chance= random.Next();
-            if (probability <= .2)
-                return true;
-            return false;
+
+            return probability <= .2;
+            //return probability <= chance *.25;
         }
 
         public string[] fancySolveProblem()
         {
+            log("\nNew search");
             string[] results = new string[3];
             Stopwatch timer = new Stopwatch();
             timer.Restart();
-            // implement simulated annealing
-            string[] origResults = defaultSolveProblem();
-            double origCost = Convert.ToDouble(origResults[COST]);
-            double bestCostSoFar = origCost;
-            double tempBestCost = origCost;
-            long temperature = 10000000000;
-            int timesinloop = 0;
-            Random rand = new Random();
-            while (temperature != 0)
-            {
-                timesinloop++;
-                int random = rand.Next(0, Cities.Length);
-                int random2 = rand.Next(0, Cities.Length);
-                City one = (City)Route[random];
-                City two = (City)Route[random2];
-                ArrayList copyRoute = (ArrayList)Route.Clone();
-                copyRoute[random] = two;
-                copyRoute[random2] = one;
 
-                TSPSolution temp = new TSPSolution(copyRoute);
-                double var = temp.costOfRoute();
-                if (temp.costOfRoute() != Double.PositiveInfinity)
+            timer.Start();
+
+            // START OF ALGORITHM HERE
+            int size = 50;
+            List<TSPSolution> solutions = new List<TSPSolution>();
+
+            int cityCount = Cities.Length;
+            double origCost = Convert.ToDouble(defaultSolveProblem()[COST]);
+
+            Random rand = new Random();
+            //int i = 0; // for debugging. Can be deleted
+
+            // Loop until we have `size` solutions
+            while (solutions.Count < size)
+            {
+                // Simulated annealing here
+                long temperature = 1000;
+                double coolingRate = .001;
+
+                TSPSolution loopBest = new TSPSolution(Route); // we'll keep track of the loop's best solution
+                double bestCostSoFar = origCost;
+                double tempBestCost = origCost;
+                //int timesinloop = 0; // for debugging. Can be deleted
+
+                // Loop until system "cools down"
+                while (temperature != 0)
                 {
-                    if (isAcceptable(tempBestCost, temp.costOfRoute(), temperature))
+                    //timesinloop++; // for debugging. Can be deleted
+                    int indexA = rand.Next(0, cityCount);
+                    int indexB = rand.Next(0, cityCount);
+                    City one = (City)Route[indexA];
+                    City two = (City)Route[indexB];
+                    ArrayList copyRoute = (ArrayList)Route.Clone();
+                    copyRoute[indexA] = two;
+                    copyRoute[indexB] = one;
+
+                    TSPSolution temp = new TSPSolution(copyRoute);
+                    double var = temp.costOfRoute();
+                    if (temp.costOfRoute() != Double.PositiveInfinity)
                     {
-                        Route = copyRoute;
-                        tempBestCost = temp.costOfRoute();
-                        if (tempBestCost < bestCostSoFar)
+                        if (isAcceptable(tempBestCost, temp.costOfRoute(), temperature))
                         {
-                            bestCostSoFar = tempBestCost;
-                            bssf = temp;
+                            Route = copyRoute;
+                            tempBestCost = temp.costOfRoute();
+                            if (tempBestCost < bestCostSoFar)
+                            {
+                                bestCostSoFar = tempBestCost;
+                                loopBest = temp;
+                            }
                         }
+                        temperature = (long)(temperature * (1.0 - coolingRate));
                     }
-                    temperature = (long)(temperature * (1.0 - .0008));
+                }
+                //log($"i:{i} timesinloop:{timesinloop}");
+
+                // Add loop's best solution only if we don't have this cost already
+                if (!solutions.Any(solution => solution.costOfRoute() == loopBest.costOfRoute()))
+                {
+                    solutions.Add(loopBest);
                 }
 
-              
+                //i++; // for debugging. Can be deleted
             }
+
+            log("Best solutions:");
+            solutions.ForEach(solution => log($"cost: {solution.costOfRoute()}"));
+
+            // Our best solution will be the one with the lowest cost
+            bssf = solutions.OrderBy(solution => solution.costOfRoute()).First();
+
+            timer.Stop();
 
 
             results[COST] = bssf.costOfRoute().ToString();    // load results into array here, replacing these dummy values
             results[TIME] = timer.Elapsed.ToString();
-            results[COUNT] = "-1";
+            results[COUNT] = solutions.Count.ToString();
             return results;
+        }
+
+        private void log(string message)
+        {
+            Console.WriteLine(message);
         }
         #endregion
     }
