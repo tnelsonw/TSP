@@ -661,6 +661,7 @@ namespace TSP
 
             }
             bssf = new TSPSolution(new ArrayList(minRoute));
+            Route= new ArrayList(minRoute);
             // TODO: Add your implementation for a greedy solver here.
 
             results[COST] = costOfBssf().ToString();  // load results into array here, replacing these dummy values
@@ -694,11 +695,11 @@ namespace TSP
             timer.Start();
 
             // START OF ALGORITHM HERE
-            int size = 50;
+            int size = 1;
             List<TSPSolution> solutions = new List<TSPSolution>();
 
             int cityCount = Cities.Length;
-            double origCost = Convert.ToDouble(defaultSolveProblem()[COST]);
+            double origCost = Convert.ToDouble(greedySolveProblem()[COST]);
 
             Random rand = new Random();
             //int i = 0; // for debugging. Can be deleted
@@ -718,31 +719,34 @@ namespace TSP
                 // Loop until system "cools down"
                 while (temperature != 0)
                 {
-                    //timesinloop++; // for debugging. Can be deleted
-                    int indexA = rand.Next(0, cityCount);
-                    int indexB = rand.Next(0, cityCount);
-                    City one = (City)Route[indexA];
-                    City two = (City)Route[indexB];
-                    ArrayList copyRoute = (ArrayList)Route.Clone();
-                    copyRoute[indexA] = two;
-                    copyRoute[indexB] = one;
-
-                    TSPSolution temp = new TSPSolution(copyRoute);
-                    double var = temp.costOfRoute();
-                    if (temp.costOfRoute() != Double.PositiveInfinity)
+                    for (int c = 0; c < cityCount/10; c++)
                     {
-                        if (isAcceptable(tempBestCost, temp.costOfRoute(), temperature))
+                        //timesinloop++; // for debugging. Can be deleted
+                        int indexA = rand.Next(0, cityCount);
+                        int indexB = rand.Next(0, cityCount);
+                        City one = (City)Route[indexA];
+                        City two = (City)Route[indexB];
+                        ArrayList copyRoute = (ArrayList)Route.Clone();
+                        copyRoute[indexA] = two;
+                        copyRoute[indexB] = one;
+
+                        TSPSolution temp = new TSPSolution(copyRoute);
+                        double var = temp.costOfRoute();
+                        if (temp.costOfRoute() != Double.PositiveInfinity)
                         {
-                            Route = copyRoute;
-                            tempBestCost = temp.costOfRoute();
-                            if (tempBestCost < bestCostSoFar)
+                            if (isAcceptable(tempBestCost, temp.costOfRoute(), temperature))
                             {
-                                bestCostSoFar = tempBestCost;
-                                loopBest = temp;
+                                Route = copyRoute;
+                                tempBestCost = temp.costOfRoute();
+                                if (tempBestCost < bestCostSoFar)
+                                {
+                                    bestCostSoFar = tempBestCost;
+                                    loopBest = temp;
+                                }
                             }
                         }
-                        temperature = (long)(temperature * (1.0 - coolingRate));
                     }
+                    temperature = (long)(temperature * (1.0 - coolingRate));
                 }
                 //log($"i:{i} timesinloop:{timesinloop}");
 
